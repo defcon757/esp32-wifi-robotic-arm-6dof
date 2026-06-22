@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Arm Control</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="page-shell">
+
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="eyebrow">ROBOTICS CONTROL SYSTEM</div>
+            <h1>🤖 Robot Arm Control Center</h1>
+            <p>Real-Time Robotic Manipulation Dashboard</p>
+        </div>
+
+        <div class="header-right">
+            <div class="status-pill online">● SYSTEM ONLINE</div>
+            <div class="status-pill subtle">FLASK SERVER ACTIVE</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+
+        <!-- LEFT SIDE: CAMERA -->
+        <section class="camera-section">
+            <div class="panel-title">
+                <div>
+                    <h2>📷 Vision System</h2>
+                    <p>ESP32-CAM live video feed</p>
+                </div>
+
+                <div id="cam-status" class="mini-status connecting">
+                    🟡 CONNECTING...
+                </div>
+            </div>
+
+            <div class="camera-box">
+                <img
+                    id="stream"
+                    src=""
+                    draggable="false"
+                    alt="Live camera stream"
+                />
+            </div>
+        </section>
+
+<!-- RIGHT SIDE: CONTROLS -->
+<section class="controls-section">
+
+    <!-- SYSTEM STATUS -->
+    <div class="status-grid">
+
+        <div class="status-card">
+            <span class="status-label">Camera</span>
+            <span class="status-value" id="camera-state">
+                CONNECTING
+            </span>
+        </div>
+
+        <div class="status-card">
+            <span class="status-label">Robot</span>
+            <span class="status-value" id="robot-state">
+                READY
+            </span>
+        </div>
+
+        <div class="status-card">
+            <span class="status-label">Safety</span>
+            <span class="status-value" id="safety-state">
+                NORMAL
+            </span>
+        </div>
+
+        <div class="status-card">
+            <span class="status-label">Mode</span>
+            <span class="status-value" id="mode-state">
+                MANUAL
+            </span>
+        </div>
+
+    </div>
+
+    <!-- LIVE ARM TELEMETRY -->
+    <div class="telemetry-panel">
+
+        <div class="telemetry-header">
+            <h3>📡 Live Arm Telemetry</h3>
+            <p>Real-time joint positions and motor output</p>
+        </div>
+
+        <div class="telemetry-grid">
+
+            <!-- ELBOW -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🔧 Elbow
+                </span>
+
+                <span class="telemetry-value" id="elbow-angle">
+                    135°
+                </span>
+
+                <div class="servo-bar">
+                    <div id="elbow-bar"
+                         class="servo-fill"
+                         style="width:50%;">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- WRIST U/D -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🎯 Wrist Up / Down
+                </span>
+
+                <span class="telemetry-value" id="wristud-angle">
+                    135°
+                </span>
+
+                <div class="servo-bar">
+                    <div id="wristud-bar"
+                         class="servo-fill"
+                         style="width:50%;">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- WRIST ROTATE -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🔄 Wrist Rotation
+                </span>
+
+                <span class="telemetry-value" id="wristrotate-angle">
+                    135°
+                </span>
+
+                <div class="servo-bar">
+                    <div id="wristrotate-bar"
+                         class="servo-fill"
+                         style="width:50%;">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CLAW -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🤏 Claw
+                </span>
+
+                <span class="telemetry-value" id="claw-angle">
+                    135°
+                </span>
+
+                <div class="servo-bar">
+                    <div id="claw-bar"
+                         class="servo-fill"
+                         style="width:50%;">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- BASE MOTOR -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🌀 Base Motor
+                </span>
+
+                <span class="telemetry-value" id="base-pulse">
+                    307
+                </span>
+
+                <span class="telemetry-desc">
+                    Current PWM Pulse
+                </span>
+
+            </div>
+
+            <!-- SHOULDER MOTOR -->
+            <div class="telemetry-item">
+
+                <span class="telemetry-name">
+                    🏗 Shoulder Motor
+                </span>
+
+                <span class="telemetry-value" id="shoulder-pulse">
+                    307
+                </span>
+
+                <span class="telemetry-desc">
+                    Current PWM Pulse
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="controls-header">
+        <h2>Arm Controls</h2>
+        <p>Use press-and-hold buttons for smooth motor movement</p>
+    </div>
+
+            <!-- BASE -->
+            <div class="control-card">
+                <h3>🌀 Base Rotation</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startMotor('base', -8)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startMotor('base', -8)"
+                        ontouchend="stopHold()">
+                        LEFT
+                    </button>
+
+                    <button onclick="stopHold(); motorStop('base')">
+                        STOP
+                    </button>
+
+                    <button
+                        onmousedown="startMotor('base', 8)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startMotor('base', 8)"
+                        ontouchend="stopHold()">
+                        RIGHT
+                    </button>
+                </div>
+            </div>
+
+            <!-- SHOULDER -->
+            <div class="control-card">
+                <h3>🏗 Shoulder</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startMotor('shoulder', 8)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startMotor('shoulder', 8)"
+                        ontouchend="stopHold()">
+                        UP
+                    </button>
+
+                    <button onclick="stopHold(); motorStop('shoulder')">
+                        STOP
+                    </button>
+
+                    <button
+                        onmousedown="startMotor('shoulder', -8)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startMotor('shoulder', -8)"
+                        ontouchend="stopHold()">
+                        DOWN
+                    </button>
+                </div>
+            </div>
+
+            <!-- ELBOW -->
+            <div class="control-card">
+                <h3>🔧 Elbow</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startServo('elbow', -15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('elbow', -15)"
+                        ontouchend="stopHold()">
+                        UP
+                    </button>
+
+                    <button onclick="setServo('elbow', 135)">
+                        CENTER
+                    </button>
+
+                    <button
+                        onmousedown="startServo('elbow', 15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('elbow', 15)"
+                        ontouchend="stopHold()">
+                        DOWN
+                    </button>
+                </div>
+            </div>
+
+            <!-- WRIST UP/DOWN -->
+            <div class="control-card">
+                <h3>🎯 Wrist Up / Down</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startServo('wrist_ud', 15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('wrist_ud', 15)"
+                        ontouchend="stopHold()">
+                        UP
+                    </button>
+
+                    <button onclick="setServo('wrist_ud', 135)">
+                        CENTER
+                    </button>
+
+                    <button
+                        onmousedown="startServo('wrist_ud', -15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('wrist_ud', -15)"
+                        ontouchend="stopHold()">
+                        DOWN
+                    </button>
+                </div>
+            </div>
+
+            <!-- WRIST ROTATION -->
+            <div class="control-card">
+                <h3>🔄 Wrist Rotation</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startServo('wrist_rotate', -15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('wrist_rotate', -15)"
+                        ontouchend="stopHold()">
+                        LEFT
+                    </button>
+
+                    <button onclick="setServo('wrist_rotate', 135)">
+                        CENTER
+                    </button>
+
+                    <button
+                        onmousedown="startServo('wrist_rotate', 15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('wrist_rotate', 15)"
+                        ontouchend="stopHold()">
+                        RIGHT
+                    </button>
+                </div>
+            </div>
+
+            <!-- CLAW -->
+            <div class="control-card">
+                <h3>🤏 Claw</h3>
+                <div class="button-row">
+                    <button
+                        onmousedown="startServo('claw', 15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('claw', 15)"
+                        ontouchend="stopHold()">
+                        OPEN
+                    </button>
+
+                    <button onclick="setServo('claw', 135)">
+                        CENTER
+                    </button>
+
+                    <button
+                        onmousedown="startServo('claw', -15)"
+                        onmouseup="stopHold()"
+                        ontouchstart="startServo('claw', -15)"
+                        ontouchend="stopHold()">
+                        CLOSE
+                    </button>
+                </div>
+            </div>
+
+            <!-- HOME -->
+            <div class="control-card">
+                <h3>🏠 Preset Position</h3>
+                <div class="button-row single">
+                    <button onclick="homeArm()">
+                        HOME
+                    </button>
+                </div>
+            </div>
+
+            <!-- SAFETY -->
+            <div class="control-card safety-card">
+                <h3>🛑 Safety</h3>
+                <div class="button-row single">
+                    <button class="stop-btn" onclick="stopAll()">
+                        EMERGENCY STOP
+                    </button>
+                </div>
+                <p class="safety-note">Immediately stops all motors and servo actions.</p>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer-info">
+        <span>Robot Arm v1.0</span>
+        <span>Flask Control Server</span>
+        <span>ESP32 Camera Stream</span>
+    </footer>
+
+</div>
+
+<!-- MAIN CONTROL SCRIPT -->
+<script src="/static/script.js"></script>
+
+<!-- CAMERA STREAM SCRIPT -->
+<script>
+const CAMERA_IP = "{{ camera_ip }}";
+
+const streamImg = document.getElementById("stream");
+const camStatus = document.getElementById("cam-status");
+
+let reconnectTimer = null;
+
+function buildStreamURL() {
+    return `http://${CAMERA_IP}/stream?t=${Date.now()}`;
+}
+
+function connectStream() {
+    console.log("Connecting camera stream...");
+    camStatus.className = "mini-status connecting";
+    camStatus.textContent = "🟡 CONNECTING...";
+    streamImg.src = buildStreamURL();
+}
+
+streamImg.onload = () => {
+    console.log("Camera stream connected");
+    camStatus.className = "mini-status live";
+    camStatus.textContent = "🟢 LIVE";
+
+    const cameraState = document.getElementById("camera-state");
+    if (cameraState) cameraState.textContent = "LIVE";
+
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
+};
+
+streamImg.onerror = () => {
+    console.log("Camera stream disconnected");
+    camStatus.className = "mini-status error";
+    camStatus.textContent = "🔴 RECONNECTING...";
+    streamImg.src = "";
+
+    const cameraState = document.getElementById("camera-state");
+    if (cameraState) cameraState.textContent = "OFFLINE";
+
+    if (!reconnectTimer) {
+        reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            connectStream();
+        }, 2000);
+    }
+};
+
+connectStream();
+</script>
+
+</body>
+</html>
